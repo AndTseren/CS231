@@ -81,18 +81,23 @@ def svm_loss_vectorized(W, X, y, reg):
     # result in loss.                                                           #
     #############################################################################
     # *****START OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
-
+    # calc scores for all object
     scores = X.dot(W)
+    # create colomn with true class value
     true_scores_position = y[:, np.newaxis]
+    # select scores for true class
     true_scores = np.take_along_axis(scores, true_scores_position, axis=1)
+    # calc margins for each object and class
     margins = np.maximum(0, scores - true_scores + 1)
+    # copy margins for future gradient computing
     margins_temp = np.copy(margins)
+    # put zero value to margins matrix for true class
     np.put_along_axis(margins, true_scores_position, 0, axis=1)
+    #compute loss
     loss = np.sum(margins)
 
     #divide by num_train and add regularization to the loss
-    num_train = X.shape[0]
-    loss /= num_train
+    loss /= X.shape[0]
     loss += reg * np.sum(W * W)
 
     # *****END OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
@@ -107,12 +112,16 @@ def svm_loss_vectorized(W, X, y, reg):
     # loss.                                                                     #
     #############################################################################
     # *****START OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
-
+    # put ones instead positive margins
     margins_temp[margins_temp > 0] = 1
+    # computing number positive margins in each row and substruct it from margins for true class
     true_scores_margins = np.take_along_axis(margins_temp, true_scores_position, axis=1) - margins_temp.sum(axis=1)[:, np.newaxis]
+    # put previous value to margins matrix for true class
     np.put_along_axis(margins_temp, true_scores_position, true_scores_margins, axis=1)
+    # calc gradient by multiple X transpose with modified margin matrix
     dW = X.transpose().dot(margins_temp)
-    dW /= num_train
+    # divide by num_train and add regularization to the gradient
+    dW /= X.shape[0]
     dW += 2*reg * W
 
     # *****END OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
